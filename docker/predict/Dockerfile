@@ -1,7 +1,13 @@
 FROM pytorch/pytorch
-ARG neptuneToken
-ENV NEPTUNE_API_TOKEN ${neptuneToken}
-RUN ["pip", "install", "sklearn"]
-RUN ["pip", "install", "pytorch-ignite"]
-RUN ["pip", "install", "neptune-client"]
+
+WORKDIR /workspace/ml
+
+RUN ["pip", "install", "flask"]
+
+COPY . /workspace/ml
+
+EXPOSE 5000
+
+
+
 
