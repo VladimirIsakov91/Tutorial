@@ -110,7 +110,7 @@ if __name__ == '__main__':
     model.cpu()
 
     #torch.save(model.state_dict(), "/artifacts")
-    torch.save(model, "/artifacts")
+    torch.save(model, "/artifacts/model.pt")
 
 #
 #    #pruner = optuna.pruners.MedianPruner()
