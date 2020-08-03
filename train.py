@@ -1,9 +1,10 @@
 import os
 import torch
 import torch.nn as nn
+from torch.cuda.amp import GradScaler, autocast
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
-from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator
+from ignite.engine import Events, Engine, create_supervised_trainer, create_supervised_evaluator
 from ignite.metrics import Accuracy, Loss
 from ignite.contrib.handlers.param_scheduler import LRScheduler
 from ignite.contrib.handlers.neptune_logger import *
@@ -13,6 +14,8 @@ from model import Data, MLP
 from data import X, y
 from parse import args
 
+
+scaler = GradScaler()
 
 model = MLP(n_neurons=[(20, 100), (100, 60), (60, 2)],
             activation=nn.LeakyReLU(),
@@ -46,7 +49,25 @@ scheduler = LRScheduler(step_scheduler)
 
 criterion = nn.CrossEntropyLoss()
 
-trainer = create_supervised_trainer(model, optimizer, criterion, device='cuda')
+
+def update(engine, batch):
+
+    inputs, targets = batch
+    optimizer.zero_grad()
+
+    with autocast():
+        outputs = model(inputs.cuda())
+        loss = criterion(outputs, targets.cuda())
+
+    scaler.scale(loss).backward()
+    scaler.step(optimizer)
+    scaler.update()
+
+    return loss.item()
+
+
+trainer = Engine(update)
+#trainer = create_supervised_trainer(model, optimizer, criterion, device='cuda')
 val_metrics = {"accuracy": Accuracy(), "loss": Loss(criterion)}
 evaluator = create_supervised_evaluator(model, metrics=val_metrics, device='cuda')
 
