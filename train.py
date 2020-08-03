@@ -108,5 +108,4 @@ if __name__ == '__main__':
 
     torch.save(model, "./model.pt")
     #print(repr(model))
-#
 
